@@ -46,7 +46,25 @@
 
   .panel label { font-size: 0.85rem; color: #999; white-space: nowrap; }
 
-  /* ── AI panel ───────────────────────────────── */
+  /* ── Mode panel ─────────────────────────────── */
+  .mode-btn {
+    padding: 7px 20px;
+    border: 2px solid #333;
+    background: transparent;
+    color: #666;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.15s;
+  }
+  .mode-btn:hover:not(.active) { border-color: #555; color: #aaa; }
+  .mode-btn.active {
+    border-color: #e0b04a;
+    color: #e0b04a;
+    background: rgba(224,176,74,0.08);
+  }
+
   #ai-select {
     background: rgba(255,255,255,0.07);
     border: 1px solid #333;
@@ -55,6 +73,7 @@
     padding: 5px 10px;
     font-size: 0.85rem;
     cursor: pointer;
+    display: none;
   }
   #ai-select:focus { outline: 1px solid #e0b04a; }
 
@@ -252,11 +271,12 @@
 
 <h1>Checkers</h1>
 
-<!-- AI panel -->
-<div id="ai-panel" class="panel">
-  <label for="ai-select">Computer opponent</label>
+<!-- Mode panel -->
+<div id="mode-panel" class="panel">
+  <label>Play against</label>
+  <button id="mode-player" class="mode-btn active">Player</button>
+  <button id="mode-computer" class="mode-btn">Computer</button>
   <select id="ai-select">
-    <option value="0">Off</option>
     <option value="2">Easy</option>
     <option value="5" selected>Medium</option>
     <option value="8">Hard</option>
@@ -746,7 +766,7 @@ function cleanupPeer() {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
-function isAIEnabled() { return aiDepth() > 0; }
+function isAIEnabled() { return document.getElementById('mode-computer').classList.contains('active'); }
 function aiDepth()     { return parseInt(document.getElementById('ai-select').value); }
 
 function setAIStatus(msg, cls = '') {
@@ -814,6 +834,20 @@ function setStatus(state) {
 document.getElementById('restart-btn').addEventListener('click', () => {
   if (onlineMode) { conn.send({type:'restart'}); initBoard(); if(myColor===RED) syncState(); }
   else initBoard();
+});
+
+document.getElementById('mode-player').addEventListener('click', () => {
+  document.getElementById('mode-player').classList.add('active');
+  document.getElementById('mode-computer').classList.remove('active');
+  document.getElementById('ai-select').style.display = 'none';
+  initBoard();
+});
+
+document.getElementById('mode-computer').addEventListener('click', () => {
+  document.getElementById('mode-computer').classList.add('active');
+  document.getElementById('mode-player').classList.remove('active');
+  document.getElementById('ai-select').style.display = '';
+  initBoard();
 });
 
 document.getElementById('ai-select').addEventListener('change', () => {
