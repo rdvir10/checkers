@@ -840,6 +840,7 @@ document.getElementById('mode-player').addEventListener('click', () => {
   document.getElementById('mode-player').classList.add('active');
   document.getElementById('mode-computer').classList.remove('active');
   document.getElementById('ai-select').style.display = 'none';
+  document.getElementById('online-panel').style.display = '';
   initBoard();
 });
 
@@ -847,6 +848,8 @@ document.getElementById('mode-computer').addEventListener('click', () => {
   document.getElementById('mode-computer').classList.add('active');
   document.getElementById('mode-player').classList.remove('active');
   document.getElementById('ai-select').style.display = '';
+  document.getElementById('online-panel').style.display = 'none';
+  if (onlineMode) leaveGame();
   initBoard();
 });
 
