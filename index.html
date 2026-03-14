@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkers</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+    color: #eee;
+    padding: 20px;
+  }
+
+  h1 {
+    margin-bottom: 14px;
+    font-size: 2rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #e0b04a;
+  }
+
+  /* ── AI panel ───────────────────────────────── */
+  #ai-panel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 9px 14px;
+    margin-bottom: 12px;
+    max-width: 580px;
+    width: 100%;
+  }
+
+  #ai-panel label { font-size: 0.85rem; color: #aaa; white-space: nowrap; cursor: pointer; }
+
+  #ai-toggle {
+    cursor: pointer;
+    width: 15px; height: 15px;
+    accent-color: #e0b04a;
+    flex-shrink: 0;
+  }
+
+  #ai-key {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #eee;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    font-family: monospace;
+    width: 250px;
+    flex-shrink: 1;
+  }
+  #ai-key:focus { outline: 1px solid #e0b04a; }
+  #ai-key::placeholder { color: #555; }
+
+  #ai-status {
+    font-size: 0.8rem;
+    color: #888;
+    font-style: italic;
+    min-height: 1em;
+    white-space: nowrap;
+  }
+  #ai-status.thinking { color: #e0b04a; }
+  #ai-status.error    { color: #e05555; font-style: normal; }
+
+  /* ── Status / score ─────────────────────────── */
+  #status {
+    margin-bottom: 12px;
+    font-size: 1.1rem;
+    min-height: 1.5em;
+    color: #ccc;
+  }
+  #status .white-turn { color: #ddd; font-weight: bold; }
+  #status .black-turn { color: #aaa; font-weight: bold; }
+  #status .winner     { color: #e0b04a; font-weight: bold; font-size: 1.3rem; }
+
+  #score {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+  }
+  .score-box { text-align: center; }
+  .score-box .label { color: #888; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+  .score-box .count { font-size: 1.6rem; font-weight: bold; }
+  .score-box.white-score .count { color: #ddd; }
+  .score-box.black-score .count { color: #aaa; }
+
+  /* ── Board ──────────────────────────────────── */
+  #board-wrap {
+    border: 4px solid #444;
+    border-radius: 4px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+
+  #board {
+    display: grid;
+    grid-template-columns: repeat(8, 70px);
+    grid-template-rows: repeat(8, 70px);
+  }
+
+  #board.ai-thinking { pointer-events: none; opacity: 0.82; }
+
+  .cell {
+    width: 70px; height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    position: relative;
+  }
+  .cell.light { background: #f0d9b5; }
+  .cell.dark  { background: #b58863; }
+  .cell.dark.reachable { background: #7fa650; cursor: pointer; }
+  .cell.dark.reachable:hover { background: #6b9040; }
+
+  /* ── Pieces ─────────────────────────────────── */
+  .piece {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    user-select: none;
+    position: relative;
+  }
+  .piece.red {
+    background: radial-gradient(circle at 35% 35%, #ffffff, #d0d0d0);
+    border: 3px solid #999;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 3px rgba(255,255,255,0.8);
+  }
+  .piece.black {
+    background: radial-gradient(circle at 35% 35%, #888, #222);
+    border: 3px solid #000;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.15);
+  }
+  .piece.selected {
+    transform: scale(1.15) translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.5), 0 0 0 3px #e0b04a;
+  }
+  .piece.king::after {
+    content: '♛';
+    position: absolute;
+    font-size: 1.1rem;
+    color: rgba(255,220,100,0.9);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+
+  /* ── Controls ───────────────────────────────── */
+  #controls { margin-top: 16px; display: flex; gap: 12px; }
+
+  button {
+    padding: 8px 22px;
+    border: 2px solid #e0b04a;
+    background: transparent;
+    color: #e0b04a;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background 0.15s, color 0.15s;
+  }
+  button:hover { background: #e0b04a; color: #1a1a2e; }
+</style>
+</head>
+<body>
+
+<h1>Checkers</h1>
+
+<div id="ai-panel">
+  <input type="checkbox" id="ai-toggle">
+  <label for="ai-toggle">AI plays Black</label>
+  <input type="password" id="ai-key" placeholder="Anthropic API key (sk-ant-…)" autocomplete="off">
+  <span id="ai-status"></span>
+</div>
+
+<div id="score">
+  <div class="score-box white-score">
+    <div class="label">White captured</div>
+    <div class="count" id="white-captures">0</div>
+  </div>
+  <div class="score-box black-score">
+    <div class="label">Black captured</div>
+    <div class="count" id="black-captures">0</div>
+  </div>
+</div>
+
+<div id="status"></div>
+
+<div id="board-wrap">
+  <div id="board"></div>
+</div>
+
+<div id="controls">
+  <button id="restart-btn">New Game</button>
+</div>
+
+<script>
+// ── Constants ────────────────────────────────────────────────────
+const EMPTY = 0;
+const RED   = 1;   // White pieces, move up (decreasing row)
+const BLACK = 2;   // Black pieces, move down (increasing row)
+const RED_KING   = 3;
+const BLACK_KING = 4;
+
+function isRed(p)   { return p === RED || p === RED_KING; }
+function isBlack(p) { return p === BLACK || p === BLACK_KING; }
+function isKing(p)  { return p === RED_KING || p === BLACK_KING; }
+
+// ── Game state ───────────────────────────────────────────────────
+let board = [];
+let turn  = RED;
+let selected = null;
+let reachable = [];
+let mustJumpFrom = null;
+let captures = { white: 0, black: 0 };
+let gameOver = false;
+let aiThinking = false;
+
+// ── Init ─────────────────────────────────────────────────────────
+function initBoard() {
+  board = Array.from({length: 8}, () => Array(8).fill(EMPTY));
+
+  for (let r = 0; r < 3; r++)
+    for (let c = 0; c < 8; c++)
+      if ((r + c) % 2 === 1) board[r][c] = BLACK;
+
+  for (let r = 5; r < 8; r++)
+    for (let c = 0; c < 8; c++)
+      if ((r + c) % 2 === 1) board[r][c] = RED;
+
+  turn = RED;
+  selected = null;
+  reachable = [];
+  mustJumpFrom = null;
+  captures = { white: 0, black: 0 };
+  gameOver = false;
+  aiThinking = false;
+  setAIStatus('');
+  render();
+}
+
+// ── Move generation ──────────────────────────────────────────────
+function getMoves(pr, pc, jumpsOnly = false) {
+  const piece = board[pr][pc];
+  if (!piece) return [];
+
+  const dirs = [];
+  if (isRed(piece) || isKing(piece))   dirs.push([-1, -1], [-1, 1]);
+  if (isBlack(piece) || isKing(piece)) dirs.push([1, -1],  [1, 1]);
+
+  const moves = [];
+  for (const [dr, dc] of dirs) {
+    const nr = pr + dr, nc = pc + dc;
+    if (!inBounds(nr, nc)) continue;
+
+    if (board[nr][nc] === EMPTY && !jumpsOnly) {
+      moves.push({r: nr, c: nc, jumpedR: null, jumpedC: null});
+    } else if (isOpponent(piece, board[nr][nc])) {
+      const jr = nr + dr, jc = nc + dc;
+      if (inBounds(jr, jc) && board[jr][jc] === EMPTY) {
+        moves.push({r: jr, c: jc, jumpedR: nr, jumpedC: nc});
+      }
+    }
+  }
+  return moves;
+}
+
+function getJumps(pr, pc) {
+  return getMoves(pr, pc, true).filter(m => m.jumpedR !== null);
+}
+
+function inBounds(r, c) { return r >= 0 && r < 8 && c >= 0 && c < 8; }
+
+function isOpponent(myPiece, other) {
+  if (!other) return false;
+  return (isRed(myPiece) && isBlack(other)) || (isBlack(myPiece) && isRed(other));
+}
+
+function anyJumpAvailable() {
+  for (let r = 0; r < 8; r++)
+    for (let c = 0; c < 8; c++)
+      if (belongsToCurrentPlayer(board[r][c]) && getJumps(r, c).length > 0)
+        return true;
+  return false;
+}
+
+function belongsToCurrentPlayer(p) {
+  return turn === RED ? isRed(p) : isBlack(p);
+}
+
+// ── All moves for a color (used by AI) ──────────────────────────
+function getAllMovesForColor(color) {
+  const isColor = color === BLACK ? isBlack : isRed;
+  const all = [];
+  let hasJump = false;
+
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      if (!isColor(board[r][c])) continue;
+      for (const m of getMoves(r, c)) {
+        if (m.jumpedR !== null) hasJump = true;
+        all.push({ from: [r, c], to: [m.r, m.c], jumpedR: m.jumpedR, jumpedC: m.jumpedC, jump: m.jumpedR !== null });
+      }
+    }
+  }
+  return hasJump ? all.filter(m => m.jump) : all;
+}
+
+// ── Board as text (for AI prompt) ───────────────────────────────
+function buildBoardString() {
+  const sym = { [EMPTY]: '.', [RED]: 'W', [BLACK]: 'B', [RED_KING]: 'WK', [BLACK_KING]: 'BK' };
+  let s = '      0    1    2    3    4    5    6    7\n';
+  for (let r = 0; r < 8; r++) {
+    s += `  ${r} `;
+    for (let c = 0; c < 8; c++) s += ` [${sym[board[r][c]].padEnd(3)}]`;
+    s += '\n';
+  }
+  return s;
+}
+
+// ── Claude API call ──────────────────────────────────────────────
+async function callClaudeForMove(moves, forcedPiece) {
+  const apiKey = document.getElementById('ai-key').value.trim();
+  if (!apiKey) throw new Error('Enter your Anthropic API key');
+
+  const moveList = moves.map((m, i) =>
+    `${i + 1}. from (${m.from[0]},${m.from[1]}) to (${m.to[0]},${m.to[1]})${m.jump ? ' [JUMP]' : ''}`
+  ).join('\n');
+
+  const chainNote = forcedPiece
+    ? `You are in a multi-jump chain — you must continue with the piece at (${forcedPiece[0]},${forcedPiece[1]}).\n`
+    : '';
+
+  const prompt =
+`You are playing checkers as Black (B/BK pieces move downward; kings move both ways).
+
+Board — rows 0-7 top→bottom, columns 0-7 left→right:
+${buildBoardString()}
+Legend: B=Black, BK=Black King, W=White, WK=White King, .=empty
+${chainNote}
+Available moves${moves[0]?.jump ? ' (JUMPS are mandatory)' : ''}:
+${moveList}
+
+Choose the strongest strategic move. Reply with ONLY the move number.`;
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5',
+      max_tokens: 16,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${resp.status}`);
+  }
+
+  const data = await resp.json();
+  const idx = parseInt(data.content[0].text.trim()) - 1;
+  return (isNaN(idx) || idx < 0 || idx >= moves.length)
+    ? moves[Math.floor(Math.random() * moves.length)]   // fallback: random
+    : moves[idx];
+}
+
+// ── AI turn orchestration ────────────────────────────────────────
+async function executeAITurn(forcedPiece = null) {
+  if (gameOver) return;
+
+  let moves;
+  if (forcedPiece) {
+    moves = getJumps(forcedPiece[0], forcedPiece[1]).map(m => ({
+      from: forcedPiece, to: [m.r, m.c],
+      jumpedR: m.jumpedR, jumpedC: m.jumpedC, jump: true,
+    }));
+  } else {
+    moves = getAllMovesForColor(BLACK);
+  }
+  if (!moves.length) return;
+
+  aiThinking = true;
+  setAIStatus('thinking…', 'thinking');
+  render();
+
+  try {
+    const chosen = await callClaudeForMove(moves, forcedPiece);
+    await delay(350);
+
+    const [fr, fc] = chosen.from;
+    const [tr, tc] = chosen.to;
+    const piece = board[fr][fc];
+
+    board[tr][tc] = piece;
+    board[fr][fc] = EMPTY;
+
+    if (chosen.jumpedR !== null) {
+      const jumped = board[chosen.jumpedR][chosen.jumpedC];
+      board[chosen.jumpedR][chosen.jumpedC] = EMPTY;
+      if (isRed(jumped))   captures.black++;
+      if (isBlack(jumped)) captures.white++;
+    }
+
+    if (piece === BLACK && tr === 7) board[tr][tc] = BLACK_KING;
+    const kinged = board[tr][tc] !== piece;
+    const further = (!kinged && chosen.jump) ? getJumps(tr, tc) : [];
+
+    aiThinking = false;
+
+    if (further.length > 0) {
+      setAIStatus('continuing jump…', 'thinking');
+      render();
+      await delay(500);
+      await executeAITurn([tr, tc]);
+    } else {
+      turn = RED;
+      mustJumpFrom = null;
+      selected = null;
+      reachable = [];
+      setAIStatus('');
+      checkWin();
+      render();
+    }
+  } catch (err) {
+    aiThinking = false;
+    setAIStatus(`Error: ${err.message}`, 'error');
+    render();
+  }
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Player selection & movement ──────────────────────────────────
+function selectPiece(r, c) {
+  if (gameOver || aiThinking) return;
+  if (!belongsToCurrentPlayer(board[r][c])) return;
+  if (mustJumpFrom && (mustJumpFrom.r !== r || mustJumpFrom.c !== c)) return;
+
+  const jumpOnly = anyJumpAvailable();
+  const moves = jumpOnly ? getJumps(r, c) : getMoves(r, c);
+  if (!moves.length) return;
+
+  selected  = {r, c};
+  reachable = moves;
+  render();
+}
+
+function movePiece(targetR, targetC) {
+  if (aiThinking) return;
+  const move = reachable.find(m => m.r === targetR && m.c === targetC);
+  if (!move) return;
+
+  const piece = board[selected.r][selected.c];
+  board[targetR][targetC] = piece;
+  board[selected.r][selected.c] = EMPTY;
+
+  if (move.jumpedR !== null) {
+    const jumped = board[move.jumpedR][move.jumpedC];
+    board[move.jumpedR][move.jumpedC] = EMPTY;
+    if (isRed(jumped))   captures.black++;
+    if (isBlack(jumped)) captures.white++;
+  }
+
+  if (piece === RED   && targetR === 0) board[targetR][targetC] = RED_KING;
+  if (piece === BLACK && targetR === 7) board[targetR][targetC] = BLACK_KING;
+
+  const kinged = board[targetR][targetC] !== piece;
+  const further = (!kinged && move.jumpedR !== null) ? getJumps(targetR, targetC) : [];
+
+  if (further.length > 0) {
+    mustJumpFrom = {r: targetR, c: targetC};
+    selected  = {r: targetR, c: targetC};
+    reachable = further;
+    render();
+  } else {
+    mustJumpFrom = null;
+    selected  = null;
+    reachable = [];
+    turn = turn === RED ? BLACK : RED;
+    checkWin();
+    render();
+
+    if (!gameOver && turn === BLACK && isAIEnabled()) {
+      delay(450).then(() => executeAITurn());
+    }
+  }
+}
+
+// ── Win detection ────────────────────────────────────────────────
+function checkWin() {
+  let rHas = 0, bHas = 0, rMoves = false, bMoves = false;
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = board[r][c];
+      if (isRed(p))   { rHas++; if (getMoves(r,c).length) rMoves = true; }
+      if (isBlack(p)) { bHas++; if (getMoves(r,c).length) bMoves = true; }
+    }
+  }
+  if (rHas === 0 || !rMoves) { gameOver = true; setStatus('black-wins'); }
+  else if (bHas === 0 || !bMoves) { gameOver = true; setStatus('white-wins'); }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
+function isAIEnabled() { return document.getElementById('ai-toggle').checked; }
+
+function setAIStatus(msg, cls = '') {
+  const el = document.getElementById('ai-status');
+  el.textContent = msg;
+  el.className = cls;
+}
+
+// ── Render ───────────────────────────────────────────────────────
+function render() {
+  const boardEl = document.getElementById('board');
+  boardEl.innerHTML = '';
+  boardEl.classList.toggle('ai-thinking', aiThinking);
+
+  const reachSet = new Set(reachable.map(m => `${m.r},${m.c}`));
+
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const cell = document.createElement('div');
+      cell.className = `cell ${(r+c)%2===0 ? 'light' : 'dark'}`;
+      const key = `${r},${c}`;
+
+      if (reachSet.has(key)) {
+        cell.classList.add('reachable');
+        cell.addEventListener('click', () => movePiece(r, c));
+      }
+
+      const p = board[r][c];
+      if (p !== EMPTY) {
+        const piece = document.createElement('div');
+        piece.className = `piece ${isRed(p) ? 'red' : 'black'}`;
+        if (isKing(p)) piece.classList.add('king');
+        if (selected && selected.r === r && selected.c === c) piece.classList.add('selected');
+
+        piece.addEventListener('click', e => {
+          e.stopPropagation();
+          if (reachSet.has(key)) movePiece(r, c);
+          else selectPiece(r, c);
+        });
+        cell.appendChild(piece);
+      }
+
+      boardEl.appendChild(cell);
+    }
+  }
+
+  document.getElementById('white-captures').textContent = captures.white;
+  document.getElementById('black-captures').textContent = captures.black;
+
+  if (!gameOver) {
+    if (aiThinking) {
+      setStatus('ai-thinking');
+    } else {
+      setStatus(turn === RED ? 'white-turn' : 'black-turn');
+    }
+  }
+}
+
+function setStatus(state) {
+  const el = document.getElementById('status');
+  if (state === 'white-turn')   el.innerHTML = '<span class="white-turn">White\'s turn</span>';
+  if (state === 'black-turn')   el.innerHTML = '<span class="black-turn">Black\'s turn</span>';
+  if (state === 'ai-thinking')  el.innerHTML = '<span class="black-turn">AI is thinking…</span>';
+  if (state === 'white-wins')   el.innerHTML = '<span class="winner">White wins! 🏆</span>';
+  if (state === 'black-wins')   el.innerHTML = '<span class="winner">Black wins! 🏆</span>';
+}
+
+// ── Persist API key ──────────────────────────────────────────────
+const keyInput = document.getElementById('ai-key');
+keyInput.value = localStorage.getItem('anthropic-key') || '';
+keyInput.addEventListener('input', () => localStorage.setItem('anthropic-key', keyInput.value));
+
+// ── Bootstrap ────────────────────────────────────────────────────
+document.getElementById('restart-btn').addEventListener('click', initBoard);
+initBoard();
+</script>
+</body>
+</html>
