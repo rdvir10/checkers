@@ -28,7 +28,7 @@
     color: #e0b04a;
   }
 
-  /* ── Panels ──────────────────────────────────── */
+  /* ── Shared panel shell ──────────────────────── */
   .panel {
     display: flex;
     align-items: center;
@@ -36,15 +36,13 @@
     flex-wrap: wrap;
     justify-content: center;
     background: rgba(255,255,255,0.04);
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 9px 14px;
-    margin-bottom: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin-bottom: 10px;
     max-width: 580px;
     width: 100%;
   }
-
-  .panel label { font-size: 0.85rem; color: #aaa; white-space: nowrap; cursor: pointer; }
 
   /* ── AI panel ───────────────────────────────── */
   #ai-toggle {
@@ -53,11 +51,12 @@
     accent-color: #e0b04a;
     flex-shrink: 0;
   }
+  .panel label { font-size: 0.85rem; color: #999; cursor: pointer; white-space: nowrap; }
 
   #ai-key {
-    background: rgba(255,255,255,0.07);
-    border: 1px solid #444;
-    border-radius: 4px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid #333;
+    border-radius: 5px;
     color: #eee;
     padding: 5px 10px;
     font-size: 0.8rem;
@@ -66,71 +65,139 @@
     flex-shrink: 1;
   }
   #ai-key:focus { outline: 1px solid #e0b04a; }
-  #ai-key::placeholder { color: #555; }
+  #ai-key::placeholder { color: #444; }
 
-  #ai-status {
-    font-size: 0.8rem;
-    color: #888;
-    font-style: italic;
-    min-height: 1em;
-    white-space: nowrap;
-  }
+  #ai-status { font-size: 0.8rem; color: #666; font-style: italic; white-space: nowrap; }
   #ai-status.thinking { color: #e0b04a; }
-  #ai-status.error    { color: #e05555; font-style: normal; }
+  #ai-status.error    { color: #c94040; font-style: normal; }
 
   /* ── Online panel ───────────────────────────── */
-  #online-panel { flex-direction: column; align-items: flex-start; gap: 7px; }
-
-  .online-label {
-    font-size: 0.8rem;
-    color: #aaa;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    width: 100%;
+  #online-panel {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
   }
 
-  #online-setup, #online-connected {
+  #online-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+  #online-header:hover { background: rgba(255,255,255,0.03); }
+
+  #online-toggle-icon {
+    font-size: 0.7rem;
+    color: #555;
+    transition: transform 0.2s;
+    margin-left: auto;
+  }
+  #online-toggle-icon.open { transform: rotate(180deg); }
+
+  #online-header-label {
+    font-size: 0.82rem;
+    color: #888;
+    letter-spacing: 0.5px;
+  }
+
+  #online-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #444;
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  #online-dot.waiting  { background: #e0b04a; }
+  #online-dot.connected { background: #5bba6f; }
+
+  #online-body {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 16px 12px;
+    border-top: 1px solid #222;
+  }
+  #online-body.open { display: flex; }
+
+  #online-setup {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
-    width: 100%;
+    padding-top: 10px;
   }
 
-  #join-input {
+  #online-connected-bar {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 10px;
+  }
+
+  #room-input {
     background: rgba(255,255,255,0.07);
-    border: 1px solid #444;
-    border-radius: 4px;
+    border: 1px solid #333;
+    border-radius: 5px;
     color: #eee;
-    padding: 5px 10px;
-    font-size: 0.8rem;
-    font-family: monospace;
-    width: 200px;
+    padding: 6px 12px;
+    font-size: 0.88rem;
+    width: 150px;
+    letter-spacing: 0.3px;
   }
-  #join-input:focus { outline: 1px solid #e0b04a; }
-  #join-input::placeholder { color: #555; }
+  #room-input:focus { outline: 1px solid #e0b04a; border-color: #555; }
+  #room-input::placeholder { color: #444; font-style: italic; }
 
-  #room-id-display {
-    font-family: monospace;
+  .online-hint {
+    font-size: 0.75rem;
+    color: #555;
+    width: 100%;
+    line-height: 1.5;
+  }
+
+  #connected-room-name {
     font-size: 0.85rem;
     color: #e0b04a;
-    background: rgba(224,176,74,0.1);
-    border: 1px solid rgba(224,176,74,0.3);
-    border-radius: 4px;
-    padding: 4px 10px;
-    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  #connected-color {
+    font-size: 0.82rem;
+    color: #777;
   }
 
   #online-status-text {
     font-size: 0.8rem;
-    color: #888;
-    font-style: italic;
+    color: #666;
     min-height: 1em;
-    width: 100%;
   }
-  #online-status-text.connected { color: #5bba6f; font-style: normal; }
-  #online-status-text.waiting   { color: #e0b04a; font-style: normal; }
-  #online-status-text.error     { color: #e05555; font-style: normal; }
+  #online-status-text.waiting   { color: #e0b04a; }
+  #online-status-text.connected { color: #5bba6f; }
+  #online-status-text.error     { color: #c94040; }
+
+  /* ── Buttons ─────────────────────────────────── */
+  button {
+    padding: 8px 22px;
+    border: 2px solid #e0b04a;
+    background: transparent;
+    color: #e0b04a;
+    border-radius: 5px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background 0.15s, color 0.15s;
+  }
+  button:hover { background: #e0b04a; color: #1a1a2e; }
+
+  .btn-sm {
+    padding: 5px 14px;
+    font-size: 0.82rem;
+    letter-spacing: 0.5px;
+  }
 
   /* ── Status / score ─────────────────────────── */
   #status {
@@ -150,14 +217,14 @@
     font-size: 0.95rem;
   }
   .score-box { text-align: center; }
-  .score-box .label { color: #888; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+  .score-box .label { color: #666; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
   .score-box .count { font-size: 1.6rem; font-weight: bold; }
   .score-box.white-score .count { color: #ddd; }
   .score-box.black-score .count { color: #aaa; }
 
   /* ── Board ──────────────────────────────────── */
   #board-wrap {
-    border: 4px solid #444;
+    border: 4px solid #333;
     border-radius: 4px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.6);
   }
@@ -220,26 +287,6 @@
 
   /* ── Controls ───────────────────────────────── */
   #controls { margin-top: 16px; display: flex; gap: 12px; }
-
-  button {
-    padding: 8px 22px;
-    border: 2px solid #e0b04a;
-    background: transparent;
-    color: #e0b04a;
-    border-radius: 4px;
-    font-size: 0.95rem;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: background 0.15s, color 0.15s;
-  }
-  button:hover { background: #e0b04a; color: #1a1a2e; }
-
-  .btn-sm {
-    padding: 5px 12px;
-    font-size: 0.8rem;
-  }
-
-  .sep { color: #555; font-size: 0.85rem; }
 </style>
 </head>
 <body>
@@ -256,23 +303,32 @@
 
 <!-- Online panel -->
 <div id="online-panel" class="panel">
-  <div class="online-label">Play Online with a Friend</div>
-
-  <div id="online-setup">
-    <button id="create-btn" class="btn-sm">Create Game</button>
-    <span class="sep">or</span>
-    <input id="join-input" placeholder="Paste room code" maxlength="40" spellcheck="false">
-    <button id="join-btn" class="btn-sm">Join</button>
+  <div id="online-header">
+    <div id="online-dot"></div>
+    <span id="online-header-label">Play with a friend online</span>
+    <span id="online-toggle-icon">&#9660;</span>
   </div>
 
-  <div id="online-connected" style="display:none">
-    <span style="font-size:0.82rem; color:#aaa;">Room:</span>
-    <span id="room-id-display"></span>
-    <button id="copy-btn" class="btn-sm">Copy</button>
-    <button id="leave-btn" class="btn-sm">Leave</button>
-  </div>
+  <div id="online-body">
+    <!-- Setup row (shown when not connected) -->
+    <div id="online-setup">
+      <input id="room-input" placeholder="room name" maxlength="30" spellcheck="false" autocomplete="off">
+      <button id="host-btn" class="btn-sm">Host</button>
+      <button id="join-btn" class="btn-sm">Join</button>
+    </div>
+    <div class="online-hint" id="online-hint">
+      Both players type the same room name — one clicks Host, the other Join.
+    </div>
 
-  <div id="online-status-text"></div>
+    <!-- Connected row (shown when connected) -->
+    <div id="online-connected-bar">
+      <span id="connected-room-name"></span>
+      <span id="connected-color"></span>
+      <button id="leave-btn" class="btn-sm" style="margin-left:auto">Leave</button>
+    </div>
+
+    <div id="online-status-text"></div>
+  </div>
 </div>
 
 <div id="score">
@@ -299,8 +355,8 @@
 <script>
 // ── Constants ────────────────────────────────────────────────────
 const EMPTY = 0;
-const RED   = 1;   // White pieces, move up (decreasing row)
-const BLACK = 2;   // Black pieces, move down (increasing row)
+const RED   = 1;
+const BLACK = 2;
 const RED_KING   = 3;
 const BLACK_KING = 4;
 
@@ -322,20 +378,17 @@ let aiThinking = false;
 let peer = null;
 let conn = null;
 let onlineMode = false;
-let myColor = null;  // RED or BLACK when in online mode
+let myColor = null;
 
 // ── Init ─────────────────────────────────────────────────────────
 function initBoard() {
   board = Array.from({length: 8}, () => Array(8).fill(EMPTY));
-
   for (let r = 0; r < 3; r++)
     for (let c = 0; c < 8; c++)
       if ((r + c) % 2 === 1) board[r][c] = BLACK;
-
   for (let r = 5; r < 8; r++)
     for (let c = 0; c < 8; c++)
       if ((r + c) % 2 === 1) board[r][c] = RED;
-
   turn = RED;
   selected = null;
   reachable = [];
@@ -351,23 +404,19 @@ function initBoard() {
 function getMoves(pr, pc, jumpsOnly = false) {
   const piece = board[pr][pc];
   if (!piece) return [];
-
   const dirs = [];
-  if (isRed(piece) || isKing(piece))   dirs.push([-1, -1], [-1, 1]);
-  if (isBlack(piece) || isKing(piece)) dirs.push([1, -1],  [1, 1]);
-
+  if (isRed(piece) || isKing(piece))   dirs.push([-1,-1],[-1,1]);
+  if (isBlack(piece) || isKing(piece)) dirs.push([1,-1],[1,1]);
   const moves = [];
   for (const [dr, dc] of dirs) {
-    const nr = pr + dr, nc = pc + dc;
-    if (!inBounds(nr, nc)) continue;
-
+    const nr = pr+dr, nc = pc+dc;
+    if (!inBounds(nr,nc)) continue;
     if (board[nr][nc] === EMPTY && !jumpsOnly) {
-      moves.push({r: nr, c: nc, jumpedR: null, jumpedC: null});
+      moves.push({r:nr,c:nc,jumpedR:null,jumpedC:null});
     } else if (isOpponent(piece, board[nr][nc])) {
-      const jr = nr + dr, jc = nc + dc;
-      if (inBounds(jr, jc) && board[jr][jc] === EMPTY) {
-        moves.push({r: jr, c: jc, jumpedR: nr, jumpedC: nc});
-      }
+      const jr = nr+dr, jc = nc+dc;
+      if (inBounds(jr,jc) && board[jr][jc] === EMPTY)
+        moves.push({r:jr,c:jc,jumpedR:nr,jumpedC:nc});
     }
   }
   return moves;
@@ -387,8 +436,7 @@ function isOpponent(myPiece, other) {
 function anyJumpAvailable() {
   for (let r = 0; r < 8; r++)
     for (let c = 0; c < 8; c++)
-      if (belongsToCurrentPlayer(board[r][c]) && getJumps(r, c).length > 0)
-        return true;
+      if (belongsToCurrentPlayer(board[r][c]) && getJumps(r,c).length > 0) return true;
   return false;
 }
 
@@ -396,27 +444,23 @@ function belongsToCurrentPlayer(p) {
   return turn === RED ? isRed(p) : isBlack(p);
 }
 
-// ── All moves for a color (used by AI) ──────────────────────────
 function getAllMovesForColor(color) {
   const isColor = color === BLACK ? isBlack : isRed;
   const all = [];
   let hasJump = false;
-
-  for (let r = 0; r < 8; r++) {
+  for (let r = 0; r < 8; r++)
     for (let c = 0; c < 8; c++) {
       if (!isColor(board[r][c])) continue;
-      for (const m of getMoves(r, c)) {
+      for (const m of getMoves(r,c)) {
         if (m.jumpedR !== null) hasJump = true;
-        all.push({ from: [r, c], to: [m.r, m.c], jumpedR: m.jumpedR, jumpedC: m.jumpedC, jump: m.jumpedR !== null });
+        all.push({from:[r,c],to:[m.r,m.c],jumpedR:m.jumpedR,jumpedC:m.jumpedC,jump:m.jumpedR!==null});
       }
     }
-  }
   return hasJump ? all.filter(m => m.jump) : all;
 }
 
-// ── Board as text (for AI prompt) ───────────────────────────────
 function buildBoardString() {
-  const sym = { [EMPTY]: '.', [RED]: 'W', [BLACK]: 'B', [RED_KING]: 'WK', [BLACK_KING]: 'BK' };
+  const sym = {[EMPTY]:'.',[RED]:'W',[BLACK]:'B',[RED_KING]:'WK',[BLACK_KING]:'BK'};
   let s = '      0    1    2    3    4    5    6    7\n';
   for (let r = 0; r < 8; r++) {
     s += `  ${r} `;
@@ -426,31 +470,23 @@ function buildBoardString() {
   return s;
 }
 
-// ── Claude API call ──────────────────────────────────────────────
+// ── Claude AI ────────────────────────────────────────────────────
 async function callClaudeForMove(moves, forcedPiece) {
   const apiKey = document.getElementById('ai-key').value.trim();
   if (!apiKey) throw new Error('Enter your Anthropic API key');
-
-  const moveList = moves.map((m, i) =>
-    `${i + 1}. from (${m.from[0]},${m.from[1]}) to (${m.to[0]},${m.to[1]})${m.jump ? ' [JUMP]' : ''}`
+  const moveList = moves.map((m,i) =>
+    `${i+1}. from (${m.from[0]},${m.from[1]}) to (${m.to[0]},${m.to[1]})${m.jump?' [JUMP]':''}`
   ).join('\n');
-
   const chainNote = forcedPiece
-    ? `You are in a multi-jump chain — you must continue with the piece at (${forcedPiece[0]},${forcedPiece[1]}).\n`
-    : '';
-
+    ? `You are in a multi-jump chain — continue with the piece at (${forcedPiece[0]},${forcedPiece[1]}).\n` : '';
   const prompt =
 `You are playing checkers as Black (B/BK pieces move downward; kings move both ways).
-
 Board — rows 0-7 top→bottom, columns 0-7 left→right:
 ${buildBoardString()}
 Legend: B=Black, BK=Black King, W=White, WK=White King, .=empty
-${chainNote}
-Available moves${moves[0]?.jump ? ' (JUMPS are mandatory)' : ''}:
+${chainNote}Available moves${moves[0]?.jump?' (JUMPS are mandatory)':''}:
 ${moveList}
-
 Choose the strongest strategic move. Reply with ONLY the move number.`;
-
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -459,103 +495,76 @@ Choose the strongest strategic move. Reply with ONLY the move number.`;
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true',
     },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5',
-      max_tokens: 16,
-      messages: [{ role: 'user', content: prompt }],
-    }),
+    body: JSON.stringify({model:'claude-haiku-4-5',max_tokens:16,messages:[{role:'user',content:prompt}]}),
   });
-
   if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
+    const err = await resp.json().catch(()=>({}));
     throw new Error(err.error?.message || `HTTP ${resp.status}`);
   }
-
   const data = await resp.json();
   const idx = parseInt(data.content[0].text.trim()) - 1;
-  return (isNaN(idx) || idx < 0 || idx >= moves.length)
-    ? moves[Math.floor(Math.random() * moves.length)]   // fallback: random
-    : moves[idx];
+  return (isNaN(idx)||idx<0||idx>=moves.length) ? moves[Math.floor(Math.random()*moves.length)] : moves[idx];
 }
 
-// ── AI turn orchestration ────────────────────────────────────────
 async function executeAITurn(forcedPiece = null) {
   if (gameOver) return;
-
   let moves;
   if (forcedPiece) {
-    moves = getJumps(forcedPiece[0], forcedPiece[1]).map(m => ({
-      from: forcedPiece, to: [m.r, m.c],
-      jumpedR: m.jumpedR, jumpedC: m.jumpedC, jump: true,
-    }));
+    moves = getJumps(forcedPiece[0],forcedPiece[1]).map(m =>
+      ({from:forcedPiece,to:[m.r,m.c],jumpedR:m.jumpedR,jumpedC:m.jumpedC,jump:true}));
   } else {
     moves = getAllMovesForColor(BLACK);
   }
   if (!moves.length) return;
-
   aiThinking = true;
-  setAIStatus('thinking…', 'thinking');
+  setAIStatus('thinking…','thinking');
   render();
-
   try {
     const chosen = await callClaudeForMove(moves, forcedPiece);
     await delay(350);
-
-    const [fr, fc] = chosen.from;
-    const [tr, tc] = chosen.to;
+    const [fr,fc] = chosen.from;
+    const [tr,tc] = chosen.to;
     const piece = board[fr][fc];
-
     board[tr][tc] = piece;
     board[fr][fc] = EMPTY;
-
     if (chosen.jumpedR !== null) {
       const jumped = board[chosen.jumpedR][chosen.jumpedC];
       board[chosen.jumpedR][chosen.jumpedC] = EMPTY;
       if (isRed(jumped))   captures.black++;
       if (isBlack(jumped)) captures.white++;
     }
-
     if (piece === BLACK && tr === 7) board[tr][tc] = BLACK_KING;
     const kinged = board[tr][tc] !== piece;
-    const further = (!kinged && chosen.jump) ? getJumps(tr, tc) : [];
-
+    const further = (!kinged && chosen.jump) ? getJumps(tr,tc) : [];
     aiThinking = false;
-
     if (further.length > 0) {
-      setAIStatus('continuing jump…', 'thinking');
+      setAIStatus('continuing jump…','thinking');
       render();
       await delay(500);
-      await executeAITurn([tr, tc]);
+      await executeAITurn([tr,tc]);
     } else {
-      turn = RED;
-      mustJumpFrom = null;
-      selected = null;
-      reachable = [];
-      setAIStatus('');
-      checkWin();
-      render();
+      turn = RED; mustJumpFrom = null; selected = null; reachable = [];
+      setAIStatus(''); checkWin(); render();
     }
   } catch (err) {
     aiThinking = false;
-    setAIStatus(`Error: ${err.message}`, 'error');
+    setAIStatus(`Error: ${err.message}`,'error');
     render();
   }
 }
 
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+function delay(ms) { return new Promise(r => setTimeout(r,ms)); }
 
-// ── Player selection & movement ──────────────────────────────────
+// ── Player movement ──────────────────────────────────────────────
 function selectPiece(r, c) {
   if (gameOver || aiThinking) return;
-  if (onlineMode && turn !== myColor) return;  // not your turn
+  if (onlineMode && turn !== myColor) return;
   if (!belongsToCurrentPlayer(board[r][c])) return;
   if (mustJumpFrom && (mustJumpFrom.r !== r || mustJumpFrom.c !== c)) return;
-
   const jumpOnly = anyJumpAvailable();
-  const moves = jumpOnly ? getJumps(r, c) : getMoves(r, c);
+  const moves = jumpOnly ? getJumps(r,c) : getMoves(r,c);
   if (!moves.length) return;
-
-  selected  = {r, c};
+  selected = {r,c};
   reachable = moves;
   render();
 }
@@ -564,37 +573,28 @@ function movePiece(targetR, targetC) {
   if (aiThinking) return;
   const move = reachable.find(m => m.r === targetR && m.c === targetC);
   if (!move) return;
-
   const piece = board[selected.r][selected.c];
   board[targetR][targetC] = piece;
   board[selected.r][selected.c] = EMPTY;
-
   if (move.jumpedR !== null) {
     const jumped = board[move.jumpedR][move.jumpedC];
     board[move.jumpedR][move.jumpedC] = EMPTY;
     if (isRed(jumped))   captures.black++;
     if (isBlack(jumped)) captures.white++;
   }
-
   if (piece === RED   && targetR === 0) board[targetR][targetC] = RED_KING;
   if (piece === BLACK && targetR === 7) board[targetR][targetC] = BLACK_KING;
-
   const kinged = board[targetR][targetC] !== piece;
-  const further = (!kinged && move.jumpedR !== null) ? getJumps(targetR, targetC) : [];
-
+  const further = (!kinged && move.jumpedR !== null) ? getJumps(targetR,targetC) : [];
   if (further.length > 0) {
-    mustJumpFrom = {r: targetR, c: targetC};
-    selected  = {r: targetR, c: targetC};
+    mustJumpFrom = {r:targetR,c:targetC};
+    selected = {r:targetR,c:targetC};
     reachable = further;
     render();
   } else {
-    mustJumpFrom = null;
-    selected  = null;
-    reachable = [];
+    mustJumpFrom = null; selected = null; reachable = [];
     turn = turn === RED ? BLACK : RED;
-    checkWin();
-    render();
-
+    checkWin(); render();
     if (onlineMode) {
       syncState();
     } else if (!gameOver && turn === BLACK && isAIEnabled()) {
@@ -605,88 +605,102 @@ function movePiece(targetR, targetC) {
 
 // ── Win detection ────────────────────────────────────────────────
 function checkWin() {
-  let rHas = 0, bHas = 0, rMoves = false, bMoves = false;
-  for (let r = 0; r < 8; r++) {
-    for (let c = 0; c < 8; c++) {
-      const p = board[r][c];
-      if (isRed(p))   { rHas++; if (getMoves(r,c).length) rMoves = true; }
-      if (isBlack(p)) { bHas++; if (getMoves(r,c).length) bMoves = true; }
-    }
+  let rHas=0,bHas=0,rMoves=false,bMoves=false;
+  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+    const p = board[r][c];
+    if (isRed(p))   { rHas++; if (getMoves(r,c).length) rMoves=true; }
+    if (isBlack(p)) { bHas++; if (getMoves(r,c).length) bMoves=true; }
   }
-  if (rHas === 0 || !rMoves) { gameOver = true; setStatus('black-wins'); }
-  else if (bHas === 0 || !bMoves) { gameOver = true; setStatus('white-wins'); }
+  if (rHas===0||!rMoves) { gameOver=true; setStatus('black-wins'); }
+  else if (bHas===0||!bMoves) { gameOver=true; setStatus('white-wins'); }
 }
 
 // ── Online mode ──────────────────────────────────────────────────
+function roomPeerId(name) {
+  return 'ckrs-' + name.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 28);
+}
+
 function setOnlineStatus(msg, cls = '') {
   const el = document.getElementById('online-status-text');
   el.textContent = msg;
   el.className = cls;
 }
 
-function createGame() {
-  cleanupPeer();
-  peer = new Peer(undefined, { debug: 0 });
-  setOnlineStatus('Connecting…', 'waiting');
+function setOnlineDot(cls) {
+  const el = document.getElementById('online-dot');
+  el.className = cls;
+}
 
-  peer.on('open', id => {
-    document.getElementById('room-id-display').textContent = id;
-    showConnectedUI();
-    setOnlineStatus('Waiting for opponent — share the room code above', 'waiting');
-    myColor = RED;
+function hostGame() {
+  const name = document.getElementById('room-input').value.trim();
+  if (!name) { setOnlineStatus('Enter a room name first', 'error'); return; }
+  cleanupPeer();
+  myColor = RED;
+  const peerId = roomPeerId(name);
+  peer = new Peer(peerId, { debug: 0 });
+  setOnlineStatus('Setting up room…', 'waiting');
+  setOnlineDot('waiting');
+
+  peer.on('open', () => {
+    setOnlineStatus(`Room "${name}" ready — waiting for your friend…`, 'waiting');
   });
 
   peer.on('connection', c => {
     if (conn) conn.close();
     conn = c;
-    setupConn();
+    setupConn(name);
   });
 
-  peer.on('error', e => setOnlineStatus('Error: ' + e.message, 'error'));
+  peer.on('error', e => {
+    const msg = e.type === 'unavailable-id'
+      ? `Room "${name}" is already taken — try a different name`
+      : 'Error: ' + e.message;
+    setOnlineStatus(msg, 'error');
+    setOnlineDot('');
+  });
 }
 
 function joinGame() {
-  const code = document.getElementById('join-input').value.trim();
-  if (!code) return;
+  const name = document.getElementById('room-input').value.trim();
+  if (!name) { setOnlineStatus('Enter a room name first', 'error'); return; }
   cleanupPeer();
   myColor = BLACK;
   peer = new Peer(undefined, { debug: 0 });
   setOnlineStatus('Connecting…', 'waiting');
+  setOnlineDot('waiting');
 
   peer.on('open', () => {
-    conn = peer.connect(code);
-    document.getElementById('room-id-display').textContent = code;
-    showConnectedUI();
-    setupConn();
+    conn = peer.connect(roomPeerId(name));
+    setupConn(name);
   });
 
-  peer.on('error', e => setOnlineStatus('Error: ' + e.message, 'error'));
+  peer.on('error', e => {
+    setOnlineStatus('Error: ' + e.message, 'error');
+    setOnlineDot('');
+  });
 }
 
-function setupConn() {
+function setupConn(roomName) {
   conn.on('open', () => {
     onlineMode = true;
     document.getElementById('ai-toggle').checked = false;
-    const colorName = myColor === RED ? 'White' : 'Black';
-    setOnlineStatus(`Connected — you play ${colorName}`, 'connected');
+    document.getElementById('online-setup').style.display = 'none';
+    document.getElementById('online-hint').style.display = 'none';
+    document.getElementById('online-connected-bar').style.display = 'flex';
+    document.getElementById('connected-room-name').textContent = roomName;
+    const colorLabel = myColor === RED ? '· you play White' : '· you play Black';
+    document.getElementById('connected-color').textContent = colorLabel;
+    setOnlineStatus('Connected', 'connected');
+    setOnlineDot('connected');
 
-    if (myColor === RED) {
-      initBoard();
-      syncState();
-    }
+    if (myColor === RED) { initBoard(); syncState(); }
   });
 
   conn.on('data', data => {
     if (data.type === 'state') {
-      board = data.board;
-      turn = data.turn;
-      captures = data.captures;
-      mustJumpFrom = null;
-      selected = null;
-      reachable = [];
-      gameOver = false;
-      checkWin();
-      render();
+      board = data.board; turn = data.turn; captures = data.captures;
+      mustJumpFrom = null; selected = null; reachable = []; gameOver = false;
+      checkWin(); render();
     } else if (data.type === 'restart') {
       initBoard();
       if (myColor === RED) syncState();
@@ -695,42 +709,34 @@ function setupConn() {
 
   conn.on('close', () => {
     setOnlineStatus('Opponent disconnected', 'error');
+    setOnlineDot('');
     onlineMode = false;
   });
 
-  conn.on('error', e => setOnlineStatus('Connection error: ' + e.message, 'error'));
+  conn.on('error', e => {
+    setOnlineStatus('Connection error: ' + e.message, 'error');
+    setOnlineDot('');
+  });
 }
 
 function syncState() {
-  if (conn && conn.open) {
-    conn.send({
-      type: 'state',
-      board: board.map(r => [...r]),
-      turn,
-      captures: { ...captures },
-    });
-  }
+  if (conn && conn.open)
+    conn.send({type:'state', board:board.map(r=>[...r]), turn, captures:{...captures}});
 }
 
 function leaveGame() {
   cleanupPeer();
-  onlineMode = false;
-  myColor = null;
+  onlineMode = false; myColor = null;
   document.getElementById('online-setup').style.display = 'flex';
-  document.getElementById('online-connected').style.display = 'none';
-  document.getElementById('join-input').value = '';
-  setOnlineStatus('');
+  document.getElementById('online-hint').style.display = '';
+  document.getElementById('online-connected-bar').style.display = 'none';
+  setOnlineStatus(''); setOnlineDot('');
   initBoard();
 }
 
 function cleanupPeer() {
-  if (conn) { try { conn.close(); } catch(e) {} conn = null; }
-  if (peer) { try { peer.destroy(); } catch(e) {} peer = null; }
-}
-
-function showConnectedUI() {
-  document.getElementById('online-setup').style.display = 'none';
-  document.getElementById('online-connected').style.display = 'flex';
+  if (conn) { try { conn.close(); } catch(e){} conn = null; }
+  if (peer) { try { peer.destroy(); } catch(e){} peer = null; }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -738,8 +744,7 @@ function isAIEnabled() { return document.getElementById('ai-toggle').checked; }
 
 function setAIStatus(msg, cls = '') {
   const el = document.getElementById('ai-status');
-  el.textContent = msg;
-  el.className = cls;
+  el.textContent = msg; el.className = cls;
 }
 
 // ── Render ───────────────────────────────────────────────────────
@@ -753,33 +758,28 @@ function render() {
 
   for (let vr = 0; vr < 8; vr++) {
     for (let vc = 0; vc < 8; vc++) {
-      const r = flip ? 7 - vr : vr;
-      const c = flip ? 7 - vc : vc;
-
+      const r = flip ? 7-vr : vr;
+      const c = flip ? 7-vc : vc;
       const cell = document.createElement('div');
-      cell.className = `cell ${(r+c)%2===0 ? 'light' : 'dark'}`;
+      cell.className = `cell ${(r+c)%2===0?'light':'dark'}`;
       const key = `${r},${c}`;
-
       if (reachSet.has(key)) {
         cell.classList.add('reachable');
-        cell.addEventListener('click', () => movePiece(r, c));
+        cell.addEventListener('click', () => movePiece(r,c));
       }
-
       const p = board[r][c];
       if (p !== EMPTY) {
         const piece = document.createElement('div');
-        piece.className = `piece ${isRed(p) ? 'red' : 'black'}`;
+        piece.className = `piece ${isRed(p)?'red':'black'}`;
         if (isKing(p)) piece.classList.add('king');
-        if (selected && selected.r === r && selected.c === c) piece.classList.add('selected');
-
+        if (selected && selected.r===r && selected.c===c) piece.classList.add('selected');
         piece.addEventListener('click', e => {
           e.stopPropagation();
-          if (reachSet.has(key)) movePiece(r, c);
-          else selectPiece(r, c);
+          if (reachSet.has(key)) movePiece(r,c);
+          else selectPiece(r,c);
         });
         cell.appendChild(piece);
       }
-
       boardEl.appendChild(cell);
     }
   }
@@ -788,21 +788,18 @@ function render() {
   document.getElementById('black-captures').textContent = captures.black;
 
   if (!gameOver) {
-    if (aiThinking) {
-      setStatus('ai-thinking');
-    } else {
-      setStatus(turn === RED ? 'white-turn' : 'black-turn');
-    }
+    if (aiThinking) setStatus('ai-thinking');
+    else setStatus(turn === RED ? 'white-turn' : 'black-turn');
   }
 }
 
 function setStatus(state) {
   const el = document.getElementById('status');
-  if (state === 'white-turn')   el.innerHTML = '<span class="white-turn">White\'s turn</span>';
-  if (state === 'black-turn')   el.innerHTML = '<span class="black-turn">Black\'s turn</span>';
-  if (state === 'ai-thinking')  el.innerHTML = '<span class="black-turn">AI is thinking…</span>';
-  if (state === 'white-wins')   el.innerHTML = '<span class="winner">White wins! 🏆</span>';
-  if (state === 'black-wins')   el.innerHTML = '<span class="winner">Black wins! 🏆</span>';
+  if (state === 'white-turn')  el.innerHTML = '<span class="white-turn">White\'s turn</span>';
+  if (state === 'black-turn')  el.innerHTML = '<span class="black-turn">Black\'s turn</span>';
+  if (state === 'ai-thinking') el.innerHTML = '<span class="black-turn">AI is thinking…</span>';
+  if (state === 'white-wins')  el.innerHTML = '<span class="winner">White wins! 🏆</span>';
+  if (state === 'black-wins')  el.innerHTML = '<span class="winner">Black wins! 🏆</span>';
 }
 
 // ── Persist API key ──────────────────────────────────────────────
@@ -812,31 +809,23 @@ keyInput.addEventListener('input', () => localStorage.setItem('anthropic-key', k
 
 // ── Event listeners ──────────────────────────────────────────────
 document.getElementById('restart-btn').addEventListener('click', () => {
-  if (onlineMode) {
-    conn.send({ type: 'restart' });
-    initBoard();
-    if (myColor === RED) syncState();
-  } else {
-    initBoard();
-  }
+  if (onlineMode) { conn.send({type:'restart'}); initBoard(); if (myColor===RED) syncState(); }
+  else initBoard();
 });
 
-document.getElementById('create-btn').addEventListener('click', createGame);
+document.getElementById('online-header').addEventListener('click', () => {
+  const body = document.getElementById('online-body');
+  const icon = document.getElementById('online-toggle-icon');
+  const open = body.classList.toggle('open');
+  icon.classList.toggle('open', open);
+});
+
+document.getElementById('host-btn').addEventListener('click', hostGame);
 document.getElementById('join-btn').addEventListener('click', joinGame);
-document.getElementById('join-input').addEventListener('keydown', e => {
+document.getElementById('room-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') joinGame();
 });
-
 document.getElementById('leave-btn').addEventListener('click', leaveGame);
-
-document.getElementById('copy-btn').addEventListener('click', () => {
-  const code = document.getElementById('room-id-display').textContent;
-  navigator.clipboard.writeText(code).then(() => {
-    const btn = document.getElementById('copy-btn');
-    btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
-  });
-});
 
 // ── Bootstrap ────────────────────────────────────────────────────
 initBoard();
