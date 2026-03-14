@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Checkers</title>
+<script src="https://unpkg.com/peerjs@1/dist/peerjs.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -27,8 +28,8 @@
     color: #e0b04a;
   }
 
-  /* ── AI panel ───────────────────────────────── */
-  #ai-panel {
+  /* ── Panels ──────────────────────────────────── */
+  .panel {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -43,8 +44,9 @@
     width: 100%;
   }
 
-  #ai-panel label { font-size: 0.85rem; color: #aaa; white-space: nowrap; cursor: pointer; }
+  .panel label { font-size: 0.85rem; color: #aaa; white-space: nowrap; cursor: pointer; }
 
+  /* ── AI panel ───────────────────────────────── */
   #ai-toggle {
     cursor: pointer;
     width: 15px; height: 15px;
@@ -75,6 +77,60 @@
   }
   #ai-status.thinking { color: #e0b04a; }
   #ai-status.error    { color: #e05555; font-style: normal; }
+
+  /* ── Online panel ───────────────────────────── */
+  #online-panel { flex-direction: column; align-items: flex-start; gap: 7px; }
+
+  .online-label {
+    font-size: 0.8rem;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    width: 100%;
+  }
+
+  #online-setup, #online-connected {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  #join-input {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #eee;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    font-family: monospace;
+    width: 200px;
+  }
+  #join-input:focus { outline: 1px solid #e0b04a; }
+  #join-input::placeholder { color: #555; }
+
+  #room-id-display {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #e0b04a;
+    background: rgba(224,176,74,0.1);
+    border: 1px solid rgba(224,176,74,0.3);
+    border-radius: 4px;
+    padding: 4px 10px;
+    letter-spacing: 0.5px;
+  }
+
+  #online-status-text {
+    font-size: 0.8rem;
+    color: #888;
+    font-style: italic;
+    min-height: 1em;
+    width: 100%;
+  }
+  #online-status-text.connected { color: #5bba6f; font-style: normal; }
+  #online-status-text.waiting   { color: #e0b04a; font-style: normal; }
+  #online-status-text.error     { color: #e05555; font-style: normal; }
 
   /* ── Status / score ─────────────────────────── */
   #status {
@@ -177,17 +233,46 @@
     transition: background 0.15s, color 0.15s;
   }
   button:hover { background: #e0b04a; color: #1a1a2e; }
+
+  .btn-sm {
+    padding: 5px 12px;
+    font-size: 0.8rem;
+  }
+
+  .sep { color: #555; font-size: 0.85rem; }
 </style>
 </head>
 <body>
 
 <h1>Checkers</h1>
 
-<div id="ai-panel">
+<!-- AI panel -->
+<div id="ai-panel" class="panel">
   <input type="checkbox" id="ai-toggle">
   <label for="ai-toggle">AI plays Black</label>
   <input type="password" id="ai-key" placeholder="Anthropic API key (sk-ant-…)" autocomplete="off">
   <span id="ai-status"></span>
+</div>
+
+<!-- Online panel -->
+<div id="online-panel" class="panel">
+  <div class="online-label">Play Online with a Friend</div>
+
+  <div id="online-setup">
+    <button id="create-btn" class="btn-sm">Create Game</button>
+    <span class="sep">or</span>
+    <input id="join-input" placeholder="Paste room code" maxlength="40" spellcheck="false">
+    <button id="join-btn" class="btn-sm">Join</button>
+  </div>
+
+  <div id="online-connected" style="display:none">
+    <span style="font-size:0.82rem; color:#aaa;">Room:</span>
+    <span id="room-id-display"></span>
+    <button id="copy-btn" class="btn-sm">Copy</button>
+    <button id="leave-btn" class="btn-sm">Leave</button>
+  </div>
+
+  <div id="online-status-text"></div>
 </div>
 
 <div id="score">
@@ -232,6 +317,12 @@ let mustJumpFrom = null;
 let captures = { white: 0, black: 0 };
 let gameOver = false;
 let aiThinking = false;
+
+// ── Online state ─────────────────────────────────────────────────
+let peer = null;
+let conn = null;
+let onlineMode = false;
+let myColor = null;  // RED or BLACK when in online mode
 
 // ── Init ─────────────────────────────────────────────────────────
 function initBoard() {
@@ -456,6 +547,7 @@ function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 // ── Player selection & movement ──────────────────────────────────
 function selectPiece(r, c) {
   if (gameOver || aiThinking) return;
+  if (onlineMode && turn !== myColor) return;  // not your turn
   if (!belongsToCurrentPlayer(board[r][c])) return;
   if (mustJumpFrom && (mustJumpFrom.r !== r || mustJumpFrom.c !== c)) return;
 
@@ -503,7 +595,9 @@ function movePiece(targetR, targetC) {
     checkWin();
     render();
 
-    if (!gameOver && turn === BLACK && isAIEnabled()) {
+    if (onlineMode) {
+      syncState();
+    } else if (!gameOver && turn === BLACK && isAIEnabled()) {
       delay(450).then(() => executeAITurn());
     }
   }
@@ -523,6 +617,122 @@ function checkWin() {
   else if (bHas === 0 || !bMoves) { gameOver = true; setStatus('white-wins'); }
 }
 
+// ── Online mode ──────────────────────────────────────────────────
+function setOnlineStatus(msg, cls = '') {
+  const el = document.getElementById('online-status-text');
+  el.textContent = msg;
+  el.className = cls;
+}
+
+function createGame() {
+  cleanupPeer();
+  peer = new Peer(undefined, { debug: 0 });
+  setOnlineStatus('Connecting…', 'waiting');
+
+  peer.on('open', id => {
+    document.getElementById('room-id-display').textContent = id;
+    showConnectedUI();
+    setOnlineStatus('Waiting for opponent — share the room code above', 'waiting');
+    myColor = RED;
+  });
+
+  peer.on('connection', c => {
+    if (conn) conn.close();
+    conn = c;
+    setupConn();
+  });
+
+  peer.on('error', e => setOnlineStatus('Error: ' + e.message, 'error'));
+}
+
+function joinGame() {
+  const code = document.getElementById('join-input').value.trim();
+  if (!code) return;
+  cleanupPeer();
+  myColor = BLACK;
+  peer = new Peer(undefined, { debug: 0 });
+  setOnlineStatus('Connecting…', 'waiting');
+
+  peer.on('open', () => {
+    conn = peer.connect(code);
+    document.getElementById('room-id-display').textContent = code;
+    showConnectedUI();
+    setupConn();
+  });
+
+  peer.on('error', e => setOnlineStatus('Error: ' + e.message, 'error'));
+}
+
+function setupConn() {
+  conn.on('open', () => {
+    onlineMode = true;
+    document.getElementById('ai-toggle').checked = false;
+    const colorName = myColor === RED ? 'White' : 'Black';
+    setOnlineStatus(`Connected — you play ${colorName}`, 'connected');
+
+    if (myColor === RED) {
+      initBoard();
+      syncState();
+    }
+  });
+
+  conn.on('data', data => {
+    if (data.type === 'state') {
+      board = data.board;
+      turn = data.turn;
+      captures = data.captures;
+      mustJumpFrom = null;
+      selected = null;
+      reachable = [];
+      gameOver = false;
+      checkWin();
+      render();
+    } else if (data.type === 'restart') {
+      initBoard();
+      if (myColor === RED) syncState();
+    }
+  });
+
+  conn.on('close', () => {
+    setOnlineStatus('Opponent disconnected', 'error');
+    onlineMode = false;
+  });
+
+  conn.on('error', e => setOnlineStatus('Connection error: ' + e.message, 'error'));
+}
+
+function syncState() {
+  if (conn && conn.open) {
+    conn.send({
+      type: 'state',
+      board: board.map(r => [...r]),
+      turn,
+      captures: { ...captures },
+    });
+  }
+}
+
+function leaveGame() {
+  cleanupPeer();
+  onlineMode = false;
+  myColor = null;
+  document.getElementById('online-setup').style.display = 'flex';
+  document.getElementById('online-connected').style.display = 'none';
+  document.getElementById('join-input').value = '';
+  setOnlineStatus('');
+  initBoard();
+}
+
+function cleanupPeer() {
+  if (conn) { try { conn.close(); } catch(e) {} conn = null; }
+  if (peer) { try { peer.destroy(); } catch(e) {} peer = null; }
+}
+
+function showConnectedUI() {
+  document.getElementById('online-setup').style.display = 'none';
+  document.getElementById('online-connected').style.display = 'flex';
+}
+
 // ── Helpers ──────────────────────────────────────────────────────
 function isAIEnabled() { return document.getElementById('ai-toggle').checked; }
 
@@ -539,9 +749,13 @@ function render() {
   boardEl.classList.toggle('ai-thinking', aiThinking);
 
   const reachSet = new Set(reachable.map(m => `${m.r},${m.c}`));
+  const flip = onlineMode && myColor === BLACK;
 
-  for (let r = 0; r < 8; r++) {
-    for (let c = 0; c < 8; c++) {
+  for (let vr = 0; vr < 8; vr++) {
+    for (let vc = 0; vc < 8; vc++) {
+      const r = flip ? 7 - vr : vr;
+      const c = flip ? 7 - vc : vc;
+
       const cell = document.createElement('div');
       cell.className = `cell ${(r+c)%2===0 ? 'light' : 'dark'}`;
       const key = `${r},${c}`;
@@ -596,8 +810,35 @@ const keyInput = document.getElementById('ai-key');
 keyInput.value = localStorage.getItem('anthropic-key') || '';
 keyInput.addEventListener('input', () => localStorage.setItem('anthropic-key', keyInput.value));
 
+// ── Event listeners ──────────────────────────────────────────────
+document.getElementById('restart-btn').addEventListener('click', () => {
+  if (onlineMode) {
+    conn.send({ type: 'restart' });
+    initBoard();
+    if (myColor === RED) syncState();
+  } else {
+    initBoard();
+  }
+});
+
+document.getElementById('create-btn').addEventListener('click', createGame);
+document.getElementById('join-btn').addEventListener('click', joinGame);
+document.getElementById('join-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') joinGame();
+});
+
+document.getElementById('leave-btn').addEventListener('click', leaveGame);
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  const code = document.getElementById('room-id-display').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+  });
+});
+
 // ── Bootstrap ────────────────────────────────────────────────────
-document.getElementById('restart-btn').addEventListener('click', initBoard);
 initBoard();
 </script>
 </body>
